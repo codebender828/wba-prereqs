@@ -1,0 +1,14 @@
+{
+  "name": "builder_prerequisite",
+  "module": "src/index.ts",
+  "workspaces": [
+    "ts"
+  ],
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
