@@ -178,3 +178,4 @@ dist
 # Added by cargo
 
 /target
+ts/src/.ignored
