@@ -15,7 +15,7 @@ const LAMPORTS_PER_SOL = 10 ** 9;
 
 const rpc = createSolanaRpc(devnet(`https://api.devnet.solana.com`));
 const rpcSubscriptions = createSolanaRpcSubscriptions(
-  devnet(`wss://alecia-grud54-fast-devnet.helius-rpc.com`)
+  devnet(`wss://api.devnet.solana.com`)
 );
 try {
   const balance =
