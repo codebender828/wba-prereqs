@@ -12,6 +12,6 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@solana/web3.js": "^2.0.0-preview.3"
+    "@solana/web3.js": "^2.0.0-preview.4"
   }
 }
