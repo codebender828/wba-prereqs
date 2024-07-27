@@ -18,10 +18,11 @@ import {
   prependTransactionMessageInstruction,
   compileTransaction,
   getBase64EncodedWireTransaction,
+  appendTransactionMessageInstruction,
 } from "@solana/web3.js";
 import { getTransferSolInstruction } from "@solana-program/system";
 import { getSetComputeUnitLimitInstruction } from "@solana-program/compute-budget";
-import { getAddMemoInstruction } from "@solana-program/memo";
+import consola from "consola";
 
 const keypair = await createKeyPairSignerFromBytes(
   new Uint8Array(__keypair),
@@ -40,8 +41,6 @@ const WBA_ADDRESS = address("GLNyfrHo68bybSkdgvDQ2y8MCVR8k6RMHwfD2HYnm1Ay");
 try {
   const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
 
-  const transferMessage = "Transfer 1 SOL to WBA Wallet with @tp3";
-
   const transactionPayload = pipe(
     createTransactionMessage({ version: 0 }),
     // assign transaction feepayer
@@ -51,19 +50,12 @@ try {
 
     // append transfer instruction and memo with instruction
     (m) =>
-      appendTransactionMessageInstructions(
-        [
-          getTransferSolInstruction({
-            source: keypair,
-            destination: WBA_ADDRESS,
-            amount: 0.1 * LAMPORTS_PER_SOL,
-          }),
-
-          // Add Memo to instruction
-          getAddMemoInstruction({
-            memo: transferMessage,
-          }),
-        ],
+      appendTransactionMessageInstruction(
+        getTransferSolInstruction({
+          source: keypair,
+          destination: WBA_ADDRESS,
+          amount: 0.1 * LAMPORTS_PER_SOL,
+        }),
         m
       )
   );
@@ -86,24 +78,36 @@ try {
       transactionPayload
     );
 
-  const signedTransaction = await signTransactionMessageWithSigners(
+  const transaction = compileTransaction(
     transactionMessageWithComputeUnitLimit
   );
-  const signature = getSignatureFromTransaction(signedTransaction);
-  console.log(
-    "Sending transaction https://explorer.solana.com/tx/" +
-      signature +
-      "/?cluster=devnet"
-  );
-  const sendTransaction = sendAndConfirmTransactionFactory({
-    rpc,
-    rpcSubscriptions,
-  });
-  const result = await sendTransaction(signedTransaction, {
-    commitment: "confirmed",
-  });
+  const transactionBase64 = getBase64EncodedWireTransaction(transaction);
+  consola.info(`Transaction base64: ${transactionBase64}`);
 
-  console.log("Transaction successful signature", result);
+  const { value: fee = 0 } = await rpc
+    .getFeeforMessage(transactionBase64)
+    .send();
+
+  // consola.info(`Gas fee: ${fee} lamports`);
+
+  // const signedTransaction = await signTransactionMessageWithSigners(
+  //   transactionMessageWithComputeUnitLimit
+  // );
+  // const signature = getSignatureFromTransaction(signedTransaction);
+  // console.log(
+  //   "Sending transaction https://explorer.solana.com/tx/" +
+  //     signature +
+  //     "/?cluster=devnet"
+  // );
+  // const sendTransaction = sendAndConfirmTransactionFactory({
+  //   rpc,
+  //   rpcSubscriptions,
+  // });
+  // const result = await sendTransaction(signedTransaction, {
+  //   commitment: "confirmed",
+  // });
+
+  // console.log("Transaction successful signature", result);
 } catch (error) {
   handleError(error);
 }
