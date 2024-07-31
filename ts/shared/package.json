@@ -1,0 +1,9 @@
+{
+  "name": "@turbin3/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@solana/web3.js": "^2.0.0-preview.4"
+  }
+}
