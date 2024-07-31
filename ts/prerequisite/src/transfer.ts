@@ -1,4 +1,4 @@
-import { handleError } from "./errors";
+import { handleError } from "../../shared/src/helpers/errors";
 import __keypair from "./keypair.json";
 import {
   address,
@@ -18,17 +18,10 @@ import {
   prependTransactionMessageInstruction,
   compileTransaction,
   getBase64EncodedWireTransaction,
-  appendTransactionMessageInstruction,
-  compileTransactionMessage,
-  getCompiledTransactionMessageDecoder,
-  getCompiledTransactionMessageEncoder,
-  getTransactionEncoder,
-  getBase64Decoder,
-  type TransactionMessageBytesBase64,
 } from "@solana/web3.js";
 import { getTransferSolInstruction } from "@solana-program/system";
 import { getSetComputeUnitLimitInstruction } from "@solana-program/compute-budget";
-import consola from "consola";
+import { getAddMemoInstruction } from "@solana-program/memo";
 
 const keypair = await createKeyPairSignerFromBytes(
   new Uint8Array(__keypair),
@@ -47,6 +40,8 @@ const WBA_ADDRESS = address("GLNyfrHo68bybSkdgvDQ2y8MCVR8k6RMHwfD2HYnm1Ay");
 try {
   const { value: latestBlockhash } = await rpc.getLatestBlockhash().send();
 
+  const transferMessage = "Transfer 1 SOL to WBA Wallet with @tp3";
+
   const transactionPayload = pipe(
     createTransactionMessage({ version: 0 }),
     // assign transaction feepayer
@@ -56,12 +51,19 @@ try {
 
     // append transfer instruction and memo with instruction
     (m) =>
-      appendTransactionMessageInstruction(
-        getTransferSolInstruction({
-          source: keypair,
-          destination: WBA_ADDRESS,
-          amount: 0.1 * LAMPORTS_PER_SOL,
-        }),
+      appendTransactionMessageInstructions(
+        [
+          getTransferSolInstruction({
+            source: keypair,
+            destination: WBA_ADDRESS,
+            amount: 0.1 * LAMPORTS_PER_SOL,
+          }),
+
+          // Add Memo to instruction
+          getAddMemoInstruction({
+            memo: transferMessage,
+          }),
+        ],
         m
       )
   );
@@ -84,54 +86,8 @@ try {
       transactionPayload
     );
 
-  const transactionMessage = compileTransactionMessage(
-    transactionMessageWithComputeUnitLimit
-  );
-
-  const transactionMessageBytes =
-    getCompiledTransactionMessageEncoder().encode(transactionMessage);
-
-  const transactionBase64 = getBase64Decoder().decode(
-    transactionMessageBytes
-  ) as TransactionMessageBytesBase64;
-  consola.info(`Transaction base64: ${transactionBase64}`);
-
-  const { value: fee = 0 } = await rpc
-    .getFeeForMessage(transactionBase64)
-    .send();
-
-  consola.info(`Gas fee: ${fee} lamports`);
-  const walletBalance = await rpc.getBalance(keypair.address).send();
-  consola.info(
-    `Wallet balance for ${keypair.address}: ${walletBalance.value} lamports`
-  );
-
-  const transferrableLamports = BigInt(walletBalance.value) - BigInt(fee!);
-  consola.info(`Transferrable lamports: ${transferrableLamports} lamports`);
-  const transferrableLamportsAsNumber = Number(transferrableLamports);
-
-  // Remove last transaction instruction
-  const transactionPayloadWithoutTransferInstruction = {
-    ...transactionPayload,
-    instructions: transactionPayload.instructions.slice(
-      0,
-      transactionPayload.instructions.length - 1
-    ),
-  };
-
-  const transaction = pipe(transactionPayloadWithoutTransferInstruction, (m) =>
-    appendTransactionMessageInstruction(
-      getTransferSolInstruction({
-        source: keypair,
-        destination: WBA_ADDRESS,
-        amount: transferrableLamportsAsNumber,
-      }),
-      m
-    )
-  );
-
   const signedTransaction = await signTransactionMessageWithSigners(
-    transaction
+    transactionMessageWithComputeUnitLimit
   );
   const signature = getSignatureFromTransaction(signedTransaction);
   console.log(

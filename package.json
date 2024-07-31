@@ -2,7 +2,7 @@
   "name": "builder_prerequisite",
   "module": "src/index.ts",
   "workspaces": [
-    "ts"
+    "ts/*"
   ],
   "type": "module",
   "devDependencies": {

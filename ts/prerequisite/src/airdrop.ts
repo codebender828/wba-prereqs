@@ -1,4 +1,4 @@
-import { handleError } from "./errors";
+import { handleError } from "../../shared/src/helpers/errors";
 import __keypair from "./keypair.json";
 import {
   createKeyPairSignerFromBytes,
