@@ -6,3 +6,22 @@ https://explorer.solana.com/tx/4MBRsDEXKcjmRFgoarzwognoDhb9xcqHmkt9Ajrvj5eSmgaQw
 
 Empty Wallet Transaction
 https://explorer.solana.com/tx/2wDYkYJ7V8X4k4YiXLRCcyu8Aac8SFEV9F2HECQosbXmETK2rt4NrAnZbyBQ2FSbPk6aXUV4SdoA8GJkzykgfmKC/?cluster=devnet
+
+<!-- Sonic Test Valdiator PK -->
+
+CZzRiwXUCTR3y9zadxUBFxKTJi5fM1xAYF97euRz4MYc
+pubkey: CZzRiwXUCTR3y9zadxUBFxKTJi5fM1xAYF97euRz4MYc
+Save this seed phrase to recover your new keypair:
+beauty rare material imitate sand ice present power example vanish opinion whisper
+==================================================================================
+
+[120,167,149,108,190,38,24,203,20,250,62,160,117,113,135,0,254,177,102,74,241,238,253,68,239,131,34,205,58,21,181,24,171,228,18,252,37,146,89,156,250,8,68,165,134,255,82,53,34,59,199,55,145,231,178,86,188,188,126,0,39,155,75,129]
+
+======= VALIDATOR KEYPAIR
+Wrote new keypair to ./config/validator-keypair.json
+================================================================================
+pubkey: RZXrRzy2yGsrX5JqjVsQESoaqMtXcWr1SR2RxMYZy9o
+================================================================================
+Save this seed phrase and your BIP39 passphrase to recover your new keypair:
+sentence party brother frozen casual raven fabric matter twin feed wealth soccer
+================================================================================
