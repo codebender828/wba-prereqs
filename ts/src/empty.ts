@@ -19,6 +19,12 @@ import {
   compileTransaction,
   getBase64EncodedWireTransaction,
   appendTransactionMessageInstruction,
+  compileTransactionMessage,
+  getCompiledTransactionMessageDecoder,
+  getCompiledTransactionMessageEncoder,
+  getTransactionEncoder,
+  getBase64Decoder,
+  type TransactionMessageBytesBase64,
 } from "@solana/web3.js";
 import { getTransferSolInstruction } from "@solana-program/system";
 import { getSetComputeUnitLimitInstruction } from "@solana-program/compute-budget";
@@ -78,36 +84,70 @@ try {
       transactionPayload
     );
 
-  const transaction = compileTransaction(
+  const transactionMessage = compileTransactionMessage(
     transactionMessageWithComputeUnitLimit
   );
-  const transactionBase64 = getBase64EncodedWireTransaction(transaction);
+
+  const transactionMessageBytes =
+    getCompiledTransactionMessageEncoder().encode(transactionMessage);
+
+  const transactionBase64 = getBase64Decoder().decode(
+    transactionMessageBytes
+  ) as TransactionMessageBytesBase64;
   consola.info(`Transaction base64: ${transactionBase64}`);
 
   const { value: fee = 0 } = await rpc
-    .getFeeforMessage(transactionBase64)
+    .getFeeForMessage(transactionBase64)
     .send();
 
-  // consola.info(`Gas fee: ${fee} lamports`);
+  consola.info(`Gas fee: ${fee} lamports`);
+  const walletBalance = await rpc.getBalance(keypair.address).send();
+  consola.info(
+    `Wallet balance for ${keypair.address}: ${walletBalance.value} lamports`
+  );
 
-  // const signedTransaction = await signTransactionMessageWithSigners(
-  //   transactionMessageWithComputeUnitLimit
-  // );
-  // const signature = getSignatureFromTransaction(signedTransaction);
-  // console.log(
-  //   "Sending transaction https://explorer.solana.com/tx/" +
-  //     signature +
-  //     "/?cluster=devnet"
-  // );
-  // const sendTransaction = sendAndConfirmTransactionFactory({
-  //   rpc,
-  //   rpcSubscriptions,
-  // });
-  // const result = await sendTransaction(signedTransaction, {
-  //   commitment: "confirmed",
-  // });
+  const transferrableLamports = BigInt(walletBalance.value) - BigInt(fee!);
+  consola.info(`Transferrable lamports: ${transferrableLamports} lamports`);
+  const transferrableLamportsAsNumber = Number(transferrableLamports);
 
-  // console.log("Transaction successful signature", result);
+  // Remove last transaction instruction
+  const transactionPayloadWithoutTransferInstruction = {
+    ...transactionPayload,
+    instructions: transactionPayload.instructions.slice(
+      0,
+      transactionPayload.instructions.length - 1
+    ),
+  };
+
+  const transaction = pipe(transactionPayloadWithoutTransferInstruction, (m) =>
+    appendTransactionMessageInstruction(
+      getTransferSolInstruction({
+        source: keypair,
+        destination: WBA_ADDRESS,
+        amount: transferrableLamportsAsNumber,
+      }),
+      m
+    )
+  );
+
+  const signedTransaction = await signTransactionMessageWithSigners(
+    transaction
+  );
+  const signature = getSignatureFromTransaction(signedTransaction);
+  console.log(
+    "Sending transaction https://explorer.solana.com/tx/" +
+      signature +
+      "/?cluster=devnet"
+  );
+  const sendTransaction = sendAndConfirmTransactionFactory({
+    rpc,
+    rpcSubscriptions,
+  });
+  const result = await sendTransaction(signedTransaction, {
+    commitment: "confirmed",
+  });
+
+  console.log("Transaction successful signature", result);
 } catch (error) {
   handleError(error);
 }
